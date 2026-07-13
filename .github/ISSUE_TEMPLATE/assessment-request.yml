@@ -1,0 +1,44 @@
+name: Assessment request
+description: Scope a new cyberkinetic assessment
+title: "[assessment] "
+labels:
+  - assessment-request
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Repos are resolved to an exact commit automatically after you submit this
+        issue. If a reference can't be resolved, the issue will be closed and
+        flagged for a maintainer — just reopen it with a fix.
+
+  - type: input
+    id: product
+    attributes:
+      label: Product
+      description: The product being assessed.
+      placeholder: Example Controller v3
+    validations:
+      required: true
+
+  - type: textarea
+    id: repos
+    attributes:
+      label: In-scope repositories
+      description: >
+        One per line. Paste a GitHub URL in any of these forms: a bare repo
+        (uses its default branch), a /tree/<branch-or-tag> URL, or a
+        /commit/<sha> URL.
+      placeholder: |
+        https://github.com/example-org/example-fw
+        https://github.com/example-org/example-gateway/tree/release-2.3
+        https://github.com/example-org/example-plc/commit/9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional context
+      description: Anything else relevant to scoping (optional).
+    validations:
+      required: false

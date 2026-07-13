@@ -1,0 +1,107 @@
+name: Resolve assessment scope
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  resolve:
+    if: contains(github.event.issue.labels.*.name, 'assessment-request')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.issue.body || "";
+
+            function field(label) {
+              const re = new RegExp(`### ${label}\\n\\n([\\s\\S]*?)(?:\\n### |$)`);
+              const m = body.match(re);
+              return m ? m[1].trim() : "";
+            }
+
+            const reposRaw = field("In-scope repositories");
+            const lines = reposRaw.split("\n").map(l => l.trim()).filter(Boolean);
+
+            const urlRe = /^https?:\/\/github\.com\/([^\/\s]+)\/([^\/\s]+?)(?:\.git)?(?:\/(tree|commit)\/([^\/\s]+))?\/?$/;
+
+            const resolved = [];
+            const errors = [];
+
+            for (const line of lines) {
+              const m = line.match(urlRe);
+              if (!m) {
+                errors.push({ line, reason: "not a recognized github.com repo/tree/commit URL" });
+                continue;
+              }
+              const [, owner, repo, , refParam] = m;
+              try {
+                let ref = refParam;
+                if (!ref) {
+                  const { data: repoData } = await github.rest.repos.get({ owner, repo });
+                  ref = repoData.default_branch;
+                }
+                const { data: commitData } = await github.rest.repos.getCommit({ owner, repo, ref });
+                resolved.push({
+                  repo_url: `https://github.com/${owner}/${repo}`,
+                  declared_ref: refParam || null,
+                  commit_sha: commitData.sha,
+                });
+              } catch (e) {
+                errors.push({ line, reason: e.message });
+              }
+            }
+
+            if (lines.length === 0) {
+              errors.push({ line: "(none)", reason: "no repositories were parsed from the issue body" });
+            }
+
+            if (errors.length > 0) {
+              const list = errors.map(e => `- \`${e.line}\`: ${e.reason}`).join("\n");
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `Scope resolution failed for one or more repositories:\n\n${list}\n\nClosing — fix the reference(s) and reopen.`,
+              });
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: ["needs-maintainer"],
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                state: "closed",
+                state_reason: "not_planned",
+              });
+              return;
+            }
+
+            const marker = "<!-- cyberkinetic:resolved-scope -->";
+            const commentBody = [
+              marker,
+              "Resolved scope:",
+              "```json",
+              JSON.stringify({ resolved_repos: resolved }, null, 2),
+              "```",
+            ].join("\n");
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody,
+            });
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ["scope-resolved"],
+            });
