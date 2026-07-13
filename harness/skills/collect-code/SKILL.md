@@ -17,6 +17,12 @@ coordinate later.
 Do NOT run unless the assessment `status='initialized'` and `in_scope_repo` has at least
 one row with a pinned `commit_sha`. Do NOT check out a floating ref. If a declared SHA
 does not resolve in the remote, stop and report it — do not substitute the branch head.
+
+This step is **all-or-nothing**: if ANY repo fails to check out, abort before writing
+anything to the DB. `status` stays `initialized` and no `in_scope_repo` row gets a
+`checkout_path` — a retry is then unambiguous. There is no partial/in-progress status to
+observe between separate runs; `status` only ever advances straight to `analyzing` once
+every repo in this assessment is collected.
 </HARD-GATE>
 
 ## When to use
