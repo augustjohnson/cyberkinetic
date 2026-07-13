@@ -20,11 +20,12 @@ import re
 import sqlite3
 import subprocess
 import sys
-import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 RESOLVED_LABEL = "repo-scope-resolved"
 MARKER = "<!-- cyberkinetic:resolved-scope -->"
+CONFIRMATION_MARKER = "<!-- cyberkinetic:assessment-initialized -->"
 SCHEMA_PATH = Path(__file__).resolve().parent.parent / "schema" / "schema.sql"
 
 
@@ -39,6 +40,17 @@ def fetch_issue(issue_repo, issue_number):
     return json.loads(out.stdout)
 
 
+def post_comment(issue_repo, issue_number, body):
+    """Best-effort confirmation — a failure here does not undo an already-committed write."""
+    out = subprocess.run(
+        ["gh", "issue", "comment", str(issue_number), "--repo", issue_repo, "--body", body],
+        capture_output=True, text=True,
+    )
+    if out.returncode != 0:
+        print(f"[initialize-assessment] WARNING: assessment was written, but could not "
+              f"comment back on the issue: {out.stderr.strip()}", file=sys.stderr)
+
+
 def extract_field(body, label):
     m = re.search(rf"### {re.escape(label)}\n\n(.*?)(?:\n### |\Z)", body, re.S)
     if not m:
@@ -51,9 +63,24 @@ def extract_resolved_scope(comments):
     for comment in reversed(comments):  # most recent resolution wins
         if MARKER in comment["body"]:
             m = re.search(r"```json\n(.*?)\n```", comment["body"], re.S)
-            if m:
+            if not m:
+                continue
+            try:
                 return json.loads(m.group(1))
+            except json.JSONDecodeError as e:
+                sys.exit(f"REJECT: malformed {MARKER} comment on the issue: {e}")
     return None
+
+
+def default_slug(issue_repo, issue_number):
+    """Assessment id / directory name: issue-derived when we have one, else a UTC
+    timestamp. `--issue` is required today, so the timestamp branch is not yet
+    reachable — it's here for whenever a non-issue intake path exists.
+    """
+    if issue_number is not None:
+        safe_repo = (issue_repo or "unknown-repo").replace("/", "-")
+        return f"issue-{safe_repo}-{issue_number}"
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
 def find_existing_assessment(data_dir, issue_url):
@@ -114,6 +141,10 @@ def main():
     if not scope or not scope.get("resolved_repos"):
         sys.exit(f"REJECT: no {MARKER} comment found on {issue['url']}")
 
+    for repo in scope["resolved_repos"]:
+        if not isinstance(repo, dict) or "repo_url" not in repo or "resolved_sha" not in repo:
+            sys.exit(f"REJECT: malformed entry in {MARKER} comment on {issue['url']}: {repo!r}")
+
     existing = find_existing_assessment(args.data_dir, issue["url"])
     if existing and existing["status"] != "initialized":
         sys.exit(
@@ -122,7 +153,7 @@ def main():
             f"correct scope on a new issue instead of re-running initialize-assessment here"
         )
 
-    assessment_id = existing["assessment_id"] if existing else str(uuid.uuid4())
+    assessment_id = existing["assessment_id"] if existing else default_slug(args.issue_repo, args.issue)
     db_path = Path(args.data_dir) / assessment_id / "assessment.db"
     con = open_db(db_path)
 
@@ -156,6 +187,18 @@ def main():
     print(f"[initialize-assessment] {verb} assessment {assessment_id} for {product!r} "
           f"({len(scope['resolved_repos'])} repo(s)) from {issue['url']}")
     print(f"[initialize-assessment] db: {db_path}")
+
+    repo_lines = "\n".join(
+        f"- `{r['repo_url']}` @ `{r['resolved_sha']}`" for r in scope["resolved_repos"]
+    )
+    post_comment(args.issue_repo, args.issue, "\n".join([
+        CONFIRMATION_MARKER,
+        f"Assessment `{assessment_id}` {verb}.",
+        "",
+        f"**Product:** {product}",
+        "**In-scope repos:**",
+        repo_lines,
+    ]))
 
 
 if __name__ == "__main__":

@@ -68,7 +68,10 @@ Create a task for each and complete in order:
    `resolved_sha`, not `declared_ref`).
 4. **Record each declared source** in `declared_source` (`processed=0`), derived from the
    same resolved repo list.
-5. **Confirm** the recorded scope back to the requester before handing off.
+5. **Confirm** the recorded scope back to the requester: post a
+   `cyberkinetic:assessment-initialized` comment on the issue (product, repos, resolved
+   SHAs, and the assessment id) before handing off. A failure to post this comment is a
+   warning, not a HARD-GATE failure — the DB write is already committed by this point.
 
 ## Implementation
 

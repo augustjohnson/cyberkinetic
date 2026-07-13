@@ -19,7 +19,8 @@ PRAGMA journal_mode = WAL;      -- tolerate the one concurrent case (blob collec
 -- ---------------------------------------------------------------------------
 
 CREATE TABLE assessment (
-    id              TEXT PRIMARY KEY,           -- ulid/uuid
+    id              TEXT PRIMARY KEY,           -- issue-derived slug (issue-<repo>-<n>),
+                                                 -- or a UTC timestamp when there's no issue
     product         TEXT NOT NULL,              -- e.g. 'Example Controller v3'
     created_at      TEXT NOT NULL DEFAULT (datetime('now')),
     issue_ref       TEXT,                       -- GitHub issue that initiated this run

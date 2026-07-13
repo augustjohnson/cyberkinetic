@@ -34,11 +34,3 @@ body:
         https://github.com/example-org/example-plc/commit/9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0
     validations:
       required: true
-
-  - type: textarea
-    id: notes
-    attributes:
-      label: Additional context
-      description: Anything else relevant to scoping (optional).
-    validations:
-      required: false
