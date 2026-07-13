@@ -69,3 +69,7 @@ Phase 1 ships with **stub scripts** under `scripts/` that echo their intended ac
 arguments, then exit 0. This lets the full cascade run end-to-end and be inspected before
 any real collection/extraction logic exists. Replacing a stub with a real implementation
 is the implementer's job and must not change the skill's gate or its DB pre/postconditions.
+
+`initialize-assessment` is implemented for real (not a stub) — it reads a
+`repo-scope-resolved` GitHub issue via `gh`, enforces its own HARD-GATE, and writes the
+assessment's initial DB state. See `skills/initialize-assessment/SKILL.md`.

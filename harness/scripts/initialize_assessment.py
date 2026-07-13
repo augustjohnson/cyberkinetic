@@ -78,16 +78,27 @@ def main():
     con.execute("PRAGMA foreign_keys = ON")
 
     existing = con.execute(
-        "SELECT id FROM assessment WHERE issue_ref = ?", (issue["url"],)
+        "SELECT id, status FROM assessment WHERE issue_ref = ?", (issue["url"],)
     ).fetchone()
-    if existing:
-        sys.exit(f"REJECT: assessment {existing[0]} already exists for {issue['url']}")
 
-    assessment_id = str(uuid.uuid4())
-    con.execute(
-        "INSERT INTO assessment (id, product, issue_ref, status) VALUES (?, ?, ?, 'initialized')",
-        (assessment_id, product, issue["url"]),
-    )
+    if existing:
+        assessment_id, status = existing
+        if status != "initialized":
+            sys.exit(
+                f"REJECT: assessment {assessment_id} for {issue['url']} has already "
+                f"advanced past 'initialized' (status={status!r}); correct scope on a "
+                f"new issue instead of re-running initialize-assessment here"
+            )
+        # Not yet consumed downstream — safe to overwrite with the corrected scope.
+        con.execute("UPDATE assessment SET product = ? WHERE id = ?", (product, assessment_id))
+        con.execute("DELETE FROM in_scope_repo WHERE assessment_id = ?", (assessment_id,))
+        con.execute("DELETE FROM declared_source WHERE assessment_id = ?", (assessment_id,))
+    else:
+        assessment_id = str(uuid.uuid4())
+        con.execute(
+            "INSERT INTO assessment (id, product, issue_ref, status) VALUES (?, ?, ?, 'initialized')",
+            (assessment_id, product, issue["url"]),
+        )
 
     for repo in scope["resolved_repos"]:
         con.execute(
@@ -104,7 +115,8 @@ def main():
     con.commit()
     con.close()
 
-    print(f"[initialize-assessment] created assessment {assessment_id} for {product!r} "
+    verb = "updated" if existing else "created"
+    print(f"[initialize-assessment] {verb} assessment {assessment_id} for {product!r} "
           f"({len(scope['resolved_repos'])} repo(s)) from {issue['url']}")
 
 

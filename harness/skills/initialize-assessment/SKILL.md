@@ -24,8 +24,11 @@ Do NOT proceed to collection, analysis, or any other skill until:
    comment, never from the raw issue body — the requester's textarea accepts unresolved
    branches, tags, and bare repo URLs, and only the workflow's comment carries a
    verified pinned SHA.
-4. No `assessment` row already exists for this issue (check `issue_ref`). Re-running
-   this skill on an already-initialized issue must be rejected, not silently duplicated.
+4. If an `assessment` row already exists for this issue (check `issue_ref`): re-running
+   is allowed ONLY while it is still `status='initialized'` — overwrite its
+   `in_scope_repo`/`declared_source` rows with the corrected scope, reusing the same
+   `assessment_id`. Once `status` has advanced past `initialized`, reject; downstream
+   state (checkouts, claims) already depends on the original scope.
 5. The expected data sources are declared (Phase 1: one `sarif` source per repo,
    derived — see Inputs).
 If any is missing, stop and get it from the requester. An assessment with vague scope
@@ -94,7 +97,7 @@ message on any gate failure — it does not silently proceed on partial scope.
 | Accepting a branch/tag instead of a SHA | Non-reproducible; citations later can't be verified against a moving target. |
 | Parsing the raw issue body for repo refs | The requester's textarea can hold an unresolved branch/tag/bare-repo URL; only the `cyberkinetic:resolved-scope` comment is verified and pinned. |
 | Proceeding on comment-presence without checking the `repo-scope-resolved` label | An edited issue can carry a stale comment from a prior resolution attempt; the label is the authoritative "resolution succeeded" signal. |
-| Re-running on an issue that already has an assessment | Silently duplicates the assessment instead of rejecting; always check `issue_ref` first. |
+| Re-running on an issue whose assessment already advanced past `initialized` | Downstream steps already consumed the old scope; overwriting it now would silently invalidate their state. Reject instead. |
 | Skipping declared sources "to save time" | Breaks the Phase 2 "collection-complete" check; an empty slot can't be trusted as a real absence. |
 | Inferring scope instead of asking | A guessed scope silently mis-frames every downstream claim. |
 
