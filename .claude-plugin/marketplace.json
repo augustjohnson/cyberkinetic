@@ -1,0 +1,13 @@
+{
+  "name": "cyberkinetic",
+  "owner": {
+    "name": "August Johnson"
+  },
+  "plugins": [
+    {
+      "name": "cyberkinetic",
+      "source": "./harness",
+      "description": "Assessment skills for cyber-physical systems: claims, provenance, and real-world consequence"
+    }
+  ]
+}

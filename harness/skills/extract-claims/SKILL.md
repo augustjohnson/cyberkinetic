@@ -56,7 +56,7 @@ axes.
 ## Implementation
 
 ```bash
-scripts/extract_claims.py --db "$ASSESSMENT_DB" --assessment "$ASSESSMENT_ID" \
+"${CLAUDE_PLUGIN_ROOT}/scripts/extract_claims.py" --db "$ASSESSMENT_DB" --assessment "$ASSESSMENT_ID" \
   --cache-dir "$CHECKOUT_CACHE"
 ```
 

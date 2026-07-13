@@ -58,7 +58,7 @@ not a truth oracle and not an auto-suppression.
 ## Implementation
 
 ```bash
-scripts/challenge_claim.py --db "$ASSESSMENT_DB" --assessment "$ASSESSMENT_ID" \
+"${CLAUDE_PLUGIN_ROOT}/scripts/challenge_claim.py" --db "$ASSESSMENT_DB" --assessment "$ASSESSMENT_ID" \
   --cache-dir "$CHECKOUT_CACHE"
 ```
 

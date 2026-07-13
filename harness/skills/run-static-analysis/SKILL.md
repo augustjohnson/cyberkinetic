@@ -35,7 +35,7 @@ transformation happens in a later, auditable skill. Record the tool version.
 ## Implementation
 
 ```bash
-scripts/run_static_analysis.py --db "$ASSESSMENT_DB" --assessment "$ASSESSMENT_ID" \
+"${CLAUDE_PLUGIN_ROOT}/scripts/run_static_analysis.py" --db "$ASSESSMENT_DB" --assessment "$ASSESSMENT_ID" \
   --cache-dir "$CHECKOUT_CACHE"
 ```
 

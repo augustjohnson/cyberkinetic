@@ -34,7 +34,7 @@ does not resolve in the remote, stop and report it — do not substitute the bra
 ## Implementation
 
 ```bash
-scripts/collect_code.py --db "$ASSESSMENT_DB" --assessment "$ASSESSMENT_ID" \
+"${CLAUDE_PLUGIN_ROOT}/scripts/collect_code.py" --db "$ASSESSMENT_DB" --assessment "$ASSESSMENT_ID" \
   --cache-dir "$CHECKOUT_CACHE"
 ```
 

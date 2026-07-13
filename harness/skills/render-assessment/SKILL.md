@@ -44,7 +44,7 @@ a short story, and ordering is a human judgment, not an algorithm. See `docs/adr
 ## Implementation
 
 ```bash
-scripts/render_assessment.py --db "$ASSESSMENT_DB" --assessment "$ASSESSMENT_ID" \
+"${CLAUDE_PLUGIN_ROOT}/scripts/render_assessment.py" --db "$ASSESSMENT_DB" --assessment "$ASSESSMENT_ID" \
   --out "$RENDER_DIR"
 ```
 

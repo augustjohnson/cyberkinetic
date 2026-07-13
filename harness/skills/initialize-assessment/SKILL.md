@@ -51,7 +51,7 @@ Create a task for each and complete in order:
 Invoke the stub script; it echoes the parsed scope and the rows it would write.
 
 ```bash
-scripts/initialize_assessment.py \
+"${CLAUDE_PLUGIN_ROOT}/scripts/initialize_assessment.py" \
   --db "$ASSESSMENT_DB" \
   --product "Example Controller v3" \
   --repo "https://github.com/example-org/example-fw@<sha>" \
