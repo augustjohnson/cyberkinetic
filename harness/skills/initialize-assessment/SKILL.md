@@ -74,7 +74,6 @@ Create a task for each and complete in order:
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/scripts/initialize_assessment.py" \
-  --db "$ASSESSMENT_DB" \
   --issue-repo "owner/repo" \
   --issue 42
 ```
@@ -83,6 +82,13 @@ This script is a real implementation, not a stub (unlike its five siblings — s
 `docs/DESIGN.md` §7 and the "Stub status" note in `using-cyberkinetic`). It fetches the
 issue via `gh`, enforces the HARD-GATE itself, and exits non-zero with a `REJECT:`
 message on any gate failure — it does not silently proceed on partial scope.
+
+It mints the assessment's directory and DB file itself, at
+`<data-dir>/<assessment_id>/assessment.db` (`--data-dir`, default
+`$CYBERKINETIC_DATA_DIR` or `./cyberkinetic-assessments` — see the "Data layout" section
+of `using-cyberkinetic/SKILL.md`), applying `schema/schema.sql` on first creation. There
+is no separate `--db` argument and no shared index of assessments: a re-run is found by
+scanning `<data-dir>` for a db whose `assessment.issue_ref` matches this issue.
 
 ## Postconditions
 

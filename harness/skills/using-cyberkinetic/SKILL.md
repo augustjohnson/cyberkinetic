@@ -8,10 +8,10 @@ description: Use when starting, resuming, or orchestrating a cyberkinetic securi
 ## Overview
 
 cyberkinetic assesses the security posture of cyber-physical products. It is a **cascade
-of skills over a shared SQLite database**: each skill reads the current assessment state,
-does one bounded piece of work, and writes its result back. The database is the interface
-— no skill depends on another skill's conversation, only on what is committed to the
-assessment store.
+of skills over a per-assessment SQLite database**: each skill reads the current
+assessment state, does one bounded piece of work, and writes its result back. The
+database is the interface — no skill depends on another skill's conversation, only on
+what is committed to the assessment store.
 
 **Core principle:** claims are assertions *about the corpus*, never truth about the world.
 The pipeline tracks where each claim came from and, for code, whether its citation

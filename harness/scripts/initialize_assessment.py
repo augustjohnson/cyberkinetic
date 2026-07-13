@@ -6,6 +6,12 @@ initial DB state. The product name and repo list are read from the issue itself;
 pinned commit for each repo is read from the `cyberkinetic:resolved-scope` comment left
 by `.github/workflows/resolve-assessment-scope.yml` — never from the issue's raw
 "In-scope repositories" text, which may name an unresolved branch, tag, or bare repo.
+
+Each assessment gets its own SQLite file at `<data-dir>/<assessment_id>/assessment.db`
+(local disk, on the assessor's machine — see the "Data layout" section of
+skills/using-cyberkinetic/SKILL.md; blob storage is future work, not implemented here).
+There is no shared index of assessments, so re-runs are found by scanning `<data-dir>`
+for a db whose `assessment.issue_ref` matches this issue.
 """
 import argparse
 import json
@@ -15,9 +21,11 @@ import sqlite3
 import subprocess
 import sys
 import uuid
+from pathlib import Path
 
 RESOLVED_LABEL = "repo-scope-resolved"
 MARKER = "<!-- cyberkinetic:resolved-scope -->"
+SCHEMA_PATH = Path(__file__).resolve().parent.parent / "schema" / "schema.sql"
 
 
 def fetch_issue(issue_repo, issue_number):
@@ -48,9 +56,41 @@ def extract_resolved_scope(comments):
     return None
 
 
+def find_existing_assessment(data_dir, issue_url):
+    """Scan `<data-dir>/*/assessment.db` for a prior run against this issue."""
+    base = Path(data_dir)
+    if not base.exists():
+        return None
+    for entry in sorted(base.iterdir()):
+        db_path = entry / "assessment.db"
+        if not db_path.exists():
+            continue
+        con = sqlite3.connect(db_path)
+        row = con.execute(
+            "SELECT id, status FROM assessment WHERE issue_ref = ?", (issue_url,)
+        ).fetchone()
+        con.close()
+        if row:
+            return {"assessment_id": row[0], "status": row[1], "db_path": db_path}
+    return None
+
+
+def open_db(db_path):
+    fresh = not db_path.exists()
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    con = sqlite3.connect(db_path)
+    con.execute("PRAGMA foreign_keys = ON")
+    if fresh:
+        con.executescript(SCHEMA_PATH.read_text())
+    return con
+
+
 def main():
     p = argparse.ArgumentParser(description="Initialize a cyberkinetic assessment from a resolved issue")
-    p.add_argument("--db", required=True, help="path to assessment SQLite file")
+    p.add_argument("--data-dir", default=os.environ.get("CYBERKINETIC_DATA_DIR", "./cyberkinetic-assessments"),
+                   help="base directory holding one subdirectory per assessment id "
+                        "(assessment.db, checkouts/, render/); defaults to "
+                        "$CYBERKINETIC_DATA_DIR")
     p.add_argument("--issue-repo", default=os.environ.get("GITHUB_REPOSITORY"),
                    help="owner/repo the assessment-request issue lives in "
                         "(defaults to $GITHUB_REPOSITORY)")
@@ -74,27 +114,24 @@ def main():
     if not scope or not scope.get("resolved_repos"):
         sys.exit(f"REJECT: no {MARKER} comment found on {issue['url']}")
 
-    con = sqlite3.connect(args.db)
-    con.execute("PRAGMA foreign_keys = ON")
+    existing = find_existing_assessment(args.data_dir, issue["url"])
+    if existing and existing["status"] != "initialized":
+        sys.exit(
+            f"REJECT: assessment {existing['assessment_id']} for {issue['url']} has "
+            f"already advanced past 'initialized' (status={existing['status']!r}); "
+            f"correct scope on a new issue instead of re-running initialize-assessment here"
+        )
 
-    existing = con.execute(
-        "SELECT id, status FROM assessment WHERE issue_ref = ?", (issue["url"],)
-    ).fetchone()
+    assessment_id = existing["assessment_id"] if existing else str(uuid.uuid4())
+    db_path = Path(args.data_dir) / assessment_id / "assessment.db"
+    con = open_db(db_path)
 
     if existing:
-        assessment_id, status = existing
-        if status != "initialized":
-            sys.exit(
-                f"REJECT: assessment {assessment_id} for {issue['url']} has already "
-                f"advanced past 'initialized' (status={status!r}); correct scope on a "
-                f"new issue instead of re-running initialize-assessment here"
-            )
         # Not yet consumed downstream — safe to overwrite with the corrected scope.
         con.execute("UPDATE assessment SET product = ? WHERE id = ?", (product, assessment_id))
         con.execute("DELETE FROM in_scope_repo WHERE assessment_id = ?", (assessment_id,))
         con.execute("DELETE FROM declared_source WHERE assessment_id = ?", (assessment_id,))
     else:
-        assessment_id = str(uuid.uuid4())
         con.execute(
             "INSERT INTO assessment (id, product, issue_ref, status) VALUES (?, ?, ?, 'initialized')",
             (assessment_id, product, issue["url"]),
@@ -118,6 +155,7 @@ def main():
     verb = "updated" if existing else "created"
     print(f"[initialize-assessment] {verb} assessment {assessment_id} for {product!r} "
           f"({len(scope['resolved_repos'])} repo(s)) from {issue['url']}")
+    print(f"[initialize-assessment] db: {db_path}")
 
 
 if __name__ == "__main__":
