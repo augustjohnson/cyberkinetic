@@ -93,11 +93,17 @@ of `using-cyberkinetic/SKILL.md`), applying `schema/schema.sql` on first creatio
 is no separate `--db` argument and no shared index of assessments: a re-run is found by
 scanning `<data-dir>` for a db whose `assessment.issue_ref` matches this issue.
 
+`assessment_id` (and the directory name) is `issue-<owner>-<repo>-<number>` when created
+from an issue — human-legible and collision-safe across repos — falling back to a UTC
+timestamp for a hypothetical future non-issue intake path (not reachable today, since
+`--issue` is required).
+
 ## Postconditions
 
 - `assessment` row exists, `status='initialized'`.
 - `in_scope_repo` has one row per repo with a pinned SHA.
 - `declared_source` has one row per expected source, `processed=0`.
+- A `cyberkinetic:assessment-initialized` comment posted on the issue (best-effort).
 
 ## Common mistakes
 
