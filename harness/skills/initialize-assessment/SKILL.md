@@ -113,6 +113,7 @@ timestamp for a hypothetical future non-issue intake path (not reachable today, 
 | Parsing the raw issue body for repo refs | The requester's textarea can hold an unresolved branch/tag/bare-repo URL; only the `cyberkinetic:resolved-scope` comment is verified and pinned. |
 | Proceeding on comment-presence without checking the `repo-scope-resolved` label | An edited issue can carry a stale comment from a prior resolution attempt; the label is the authoritative "resolution succeeded" signal. |
 | Re-running on an issue whose assessment already advanced past `initialized` | Downstream steps already consumed the old scope; overwriting it now would silently invalidate their state. Reject instead. |
+| Trusting the `cyberkinetic:resolved-scope` comment's JSON without validating it | It's an editable GitHub comment, not a trusted internal format — malformed JSON or a missing `repo_url`/`resolved_sha` key must produce a clean `REJECT:`, not a raw traceback. |
 | Skipping declared sources "to save time" | Breaks the Phase 2 "collection-complete" check; an empty slot can't be trusted as a real absence. |
 | Inferring scope instead of asking | A guessed scope silently mis-frames every downstream claim. |
 
