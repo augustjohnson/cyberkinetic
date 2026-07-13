@@ -1,0 +1,17 @@
+{
+  "name": "cyberkinetic",
+  "description": "Assessment skills for cyber-physical systems: claims, provenance, and real-world consequence",
+  "version": "0.1.0",
+  "author": {
+    "name": "August"
+  },
+  "license": "CC-BY-SA-4.0",
+  "keywords": [
+    "security",
+    "cyber-physical",
+    "ot",
+    "assessment",
+    "sarif",
+    "provenance"
+  ]
+}

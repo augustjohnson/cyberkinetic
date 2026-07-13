@@ -1,0 +1,8 @@
+# disposable checkout cache — reconstructible from git coordinates in the DB
+/cache/
+*.db
+*.db-wal
+*.db-shm
+/render/
+__pycache__/
+*.pyc
