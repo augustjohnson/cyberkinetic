@@ -49,7 +49,7 @@ jobs:
                 resolved.push({
                   repo_url: `https://github.com/${owner}/${repo}`,
                   declared_ref: refParam || null,
-                  commit_sha: commitData.sha,
+                  resolved_sha: commitData.sha,
                 });
               } catch (e) {
                 errors.push({ line, reason: e.message });
@@ -103,5 +103,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              labels: ["scope-resolved"],
+              labels: ["repo-scope-resolved"],
             });
