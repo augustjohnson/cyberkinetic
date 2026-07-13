@@ -147,6 +147,29 @@ issue a verdict on each specific instance, and defers list-noise to the renderin
 layer, which may group by rule for readability. Model stays granular; grouping is
 presentation.
 
+### 4.2 Scope-match heuristic (framing only; Phase 2 for the logic)
+When `scope-match` is populated (Phase 2), its starting confidence should be graduated by
+how precisely the repo was scoped at intake, not treated as uniform once a SHA exists.
+An in-scope repo is scoped one of four ways (see ADR-0012 and the
+`assessment-request` issue form): an exact commit, a tag, a branch, or a bare repo
+(implying the default branch). These carry different strength as a signal of *intended*
+scope, even after every one of them has been resolved down to the same kind of thing (an
+immutable SHA):
+
+| Declared as | Starting scope-match confidence | Why |
+|---|---|---|
+| exact commit (`/commit/<sha>`) | highest — treat as `matches` | Unambiguous; the requester pointed at one exact state. |
+| tag (`/tree/<tag>`) | high — treat as `matches` | Tags are a conventionally-immutable, deliberate versioning signal, even though git permits moving one. |
+| branch (`/tree/<branch>`) | moderate | The resolved SHA is "wherever development happened to be" at resolution time, not a curated version — a real but weaker signal of intent. |
+| bare repo (default branch) | lowest, but still reasonable | The requester didn't specify a branch at all; still usable because most of a codebase's surface persists across ordinary commits, so the resolved snapshot stays broadly representative even without deliberate curation. |
+
+**Known gap for whoever implements this:** `resolve-assessment-scope.yml`'s
+`declared_ref` field today stores only the raw string after `/tree/` or `/commit/` (or
+`null` for a bare repo) — it does not yet distinguish a tag from a branch, since both
+render as `/tree/<name>` and look identical without an extra API call (e.g. checking
+`git/ref/tags/<name>` vs `git/ref/heads/<name>`). That disambiguation has to be added
+before this table can actually be computed from recorded data.
+
 ---
 
 ## 5. Citations and provenance

@@ -17,3 +17,5 @@ maintainers change these deliberately rather than by accident.
 | [0009](0009-determinism-toward-scripts.md) | Deterministic work in scripts; LLM only for judgment | Accepted |
 | [0010](0010-thin-mvp-code-sarif.md) | Phase 1 MVP is thin, straight-through, code + SARIF only | Accepted |
 | [0011](0011-project-name.md) | Project is named `cyberkinetic`; not named after its inspiration | Accepted |
+| [0012](0012-scope-resolved-at-submission.md) | Repo refs resolved to a SHA at issue-submission time, by a bot, not at checkout | Accepted |
+| [0013](0013-local-disk-per-assessment.md) | Assessment state on local disk, one directory per assessment; blob storage deferred | Accepted |

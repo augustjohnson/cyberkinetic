@@ -48,6 +48,29 @@ digraph cascade {
 | 5 | `challenge-claim` | **LLM** | claim + code | verdict claims |
 | 6 | `render-assessment` | script | claim + verdict | render_output (access-controlled) |
 
+## Data layout
+
+Each assessment is isolated in its own directory, on the assessor's own machine (the
+runner running this cascade is assumed to be self-hosted, not a GitHub-hosted ephemeral
+runner — nothing here persists across separate jobs otherwise):
+
+```
+<data-dir>/<assessment_id>/
+  assessment.db   # this assessment's full state — see schema/schema.sql
+  checkouts/      # $CHECKOUT_CACHE — disposable, reconstructible from (repo, sha)
+  render/         # $RENDER_DIR — access-controlled, never public (see render-assessment)
+```
+
+`<data-dir>` defaults to `$CYBERKINETIC_DATA_DIR`, or `./cyberkinetic-assessments` if
+unset. `initialize-assessment` mints `<assessment_id>` and the directory; every other
+skill is invoked with `$ASSESSMENT_DB` / `$CHECKOUT_CACHE` / `$RENDER_DIR` already
+pointing inside it. There is no shared index across assessments — a script that needs to
+find an existing one scans `<data-dir>/*/assessment.db` for a matching `issue_ref` (see
+`initialize-assessment`'s re-run handling).
+
+Storing this in blob storage (e.g. so the cascade can run on ephemeral, non-self-hosted
+runners) is explicit future work, not implemented now. See ADR-0012.
+
 ## Choosing the next skill
 
 - **No assessment row yet?** → `initialize-assessment`.

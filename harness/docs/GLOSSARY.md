@@ -59,7 +59,11 @@ and unknown." Prevents the model from implying it knows something it never compu
 
 **Scope-match** (Phase 2) — does a claim apply to *this instance* (variant, version,
 deployment): `matches` / `conflicts` / `unknown`. `conflicts` suppresses; `unknown`
-triggers interview.
+triggers interview. Starting confidence is graduated by how precisely the repo was
+scoped at intake — exact commit and tag both warrant `matches`; a branch or bare-repo
+(default branch) reference warrant less, in that order, since a branch or default-branch
+resolution reflects wherever development happened to be, not a deliberately curated
+version. See DESIGN.md §4.2.
 
 **Finding** — a claim or claim-set elevated to "this matters for the product," with a
 consequence story. Phase 1 does not implement elevation; it surfaces claims + verdicts.
