@@ -100,7 +100,8 @@ def main():
             "sarif_sha256": hashlib.sha256(sarif_bytes).hexdigest(),
         })
 
-    # Every repo succeeded — write back and advance status in one step.
+    # Every repo succeeded — write back. `status` stays 'analyzing'; advancing to
+    # 'extracted' is extract-claims' job, not this script's (see its SKILL.md).
     for r in results:
         con.execute(
             "INSERT INTO analysis_run (id, assessment_id, repo_url, commit_sha, tool_name, "
@@ -114,12 +115,11 @@ def main():
             "WHERE assessment_id = ? AND source_key = ?",
             (args.assessment, source_key),
         )
-    con.execute("UPDATE assessment SET status = 'extracted' WHERE id = ?", (args.assessment,))
     con.commit()
     con.close()
 
     print(f"[run-static-analysis] analyzed {len(results)} repo(s) for assessment "
-          f"{args.assessment}; status=extracted")
+          f"{args.assessment}; status remains 'analyzing' (extract-claims advances it next)")
 
 
 if __name__ == "__main__":
