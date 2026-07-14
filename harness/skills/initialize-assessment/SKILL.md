@@ -46,7 +46,7 @@ produces an assessment whose gaps are indistinguishable from real absences.
 |---|---|---|
 | product | requester, issue body | free text, e.g. "Example Controller v3" |
 | repos | **derived** — `cyberkinetic:resolved-scope` comment | `repo_url` + `resolved_sha` pairs; never the requester's raw textarea |
-| declared sources | **derived** — script | one `codeql:<repo_url>@<resolved_sha>` row per resolved repo; there is no requester-facing field for this, because the key embeds a SHA the requester cannot know at submission time |
+| declared sources | **derived** — script | one `sarif:<repo_url>@<resolved_sha>` row per resolved repo; there is no requester-facing field for this, because the key embeds a SHA the requester cannot know at submission time |
 | issue_ref | derived | the issue's URL, used as the assessment's dedup key |
 
 The requester's own input (the "In-scope repositories" textarea) accepts a bare repo URL,

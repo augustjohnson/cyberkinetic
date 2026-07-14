@@ -173,7 +173,7 @@ def main():
             "INSERT INTO in_scope_repo (assessment_id, repo_url, commit_sha) VALUES (?, ?, ?)",
             (assessment_id, repo["repo_url"], repo["resolved_sha"]),
         )
-        source_key = f"codeql:{repo['repo_url']}@{repo['resolved_sha']}"
+        source_key = f"sarif:{repo['repo_url']}@{repo['resolved_sha']}"
         con.execute(
             "INSERT INTO declared_source (assessment_id, source_key, source_type, processed) "
             "VALUES (?, ?, 'sarif', 0)",

@@ -44,7 +44,8 @@ CREATE TABLE in_scope_repo (
 -- SARIF run. Exists now so 'collection-complete' becomes checkable in Phase 2.
 CREATE TABLE declared_source (
     assessment_id   TEXT NOT NULL REFERENCES assessment(id),
-    source_key      TEXT NOT NULL,              -- e.g. 'codeql:<repo>@<sha>'
+    source_key      TEXT NOT NULL,              -- tool-agnostic: 'sarif:<repo>@<sha>'
+                                                 -- (the analysis tool is swappable — see ADR-0014)
     source_type     TEXT NOT NULL,              -- 'code' | 'sarif' | (Phase 2: 'sbom', 'confluence', ...)
     processed        INTEGER NOT NULL DEFAULT 0, -- 0/1
     processed_at    TEXT,

@@ -19,3 +19,4 @@ maintainers change these deliberately rather than by accident.
 | [0011](0011-project-name.md) | Project is named `cyberkinetic`; not named after its inspiration | Accepted |
 | [0012](0012-scope-resolved-at-submission.md) | Repo refs resolved to a SHA at issue-submission time, by a bot, not at checkout | Accepted |
 | [0013](0013-local-disk-per-assessment.md) | Assessment state on local disk, one directory per assessment; blob storage deferred | Accepted |
+| [0014](0014-semgrep-as-analysis-tool-stand-in.md) | Semgrep is the Phase 1 static-analysis tool, standing in for a black-box internal tool | Accepted |
