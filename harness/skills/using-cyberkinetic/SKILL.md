@@ -62,20 +62,25 @@ runner — nothing here persists across separate jobs otherwise):
 ```
 
 `<data-dir>` defaults to `$CYBERKINETIC_DATA_DIR`, or `./cyberkinetic-assessments` if
-unset. `initialize-assessment` mints `<assessment_id>` and the directory; every other
-skill is invoked with `$ASSESSMENT_DB` / `$CHECKOUT_CACHE` / `$RENDER_DIR` already
-pointing inside it. There is no shared index across assessments — a script that needs to
-find an existing one scans `<data-dir>/*/assessment.db` for a matching `issue_ref` (see
+unset. `initialize-assessment` mints `<assessment_id>`; every other skill takes
+`--data-dir` + `--assessment <assessment_id>` and derives `$ASSESSMENT_DB` /
+`$CHECKOUT_CACHE` / `$RENDER_DIR` itself from that same convention, rather than being
+handed pre-built paths (`collect-code` follows this now; the remaining stubs still take
+the older `--db`/`--cache-dir` flags directly and will move to this convention as they're
+implemented). There is no shared index across assessments — a script that needs to find
+an existing one scans `<data-dir>/*/assessment.db` for a matching `issue_ref` (see
 `initialize-assessment`'s re-run handling).
 
 Storing this in blob storage (e.g. so the cascade can run on ephemeral, non-self-hosted
-runners) is explicit future work, not implemented now. See ADR-0012.
+runners) is explicit future work, not implemented now. See ADR-0013.
 
 ## Choosing the next skill
 
 - **No assessment row yet?** → `initialize-assessment`.
 - **Assessment exists, `status` tells you where you are.** Each skill advances `status`:
-  `initialized → collecting → analyzing → extracted → challenged → rendered`.
+  `initialized → analyzing → extracted → challenged → rendered`. `collect-code` is
+  all-or-nothing (see its SKILL.md) — there is no partial/in-progress status between
+  `initialized` and `analyzing`.
 - Run the skill whose input state matches the current `status`. Each skill's HARD-GATE
   refuses to run out of order, so when in doubt, invoke the next one and let its gate check.
 

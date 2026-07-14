@@ -25,8 +25,9 @@ CREATE TABLE assessment (
     created_at      TEXT NOT NULL DEFAULT (datetime('now')),
     issue_ref       TEXT,                       -- GitHub issue that initiated this run
     status          TEXT NOT NULL DEFAULT 'initialized',
-                    -- initialized | collecting | analyzing | extracted
-                    -- | challenged | rendered
+                    -- initialized | analyzing | extracted | challenged | rendered
+                    -- (collect-code is all-or-nothing: initialized -> analyzing directly,
+                    -- no partial in-progress status)
     notes           TEXT
 );
 
